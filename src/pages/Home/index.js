@@ -1,29 +1,55 @@
 import React, {useEffect, useState} from 'react';
-import { api } from '../../config/configApi';
+import { socketUrl } from '../../config/configApi';
+import { io } from 'socket.io-client';
 
+let socket;
 const Home = () => {
   const [logado, setLogado] = useState(false);
   const [nome, setNome] = useState('');
   const [sala, setSala] = useState('');
 
-  useEffect(() => {
-      api.get('/').then((response) => {
-        console.log(response.data);
-      }) 
-      .catch((error) => {
-        console.log(error);
-        });
-      }, []);
+  const [mensagem, setMensagem] = useState('');
+  const [listaMensagens, setListaMensagens] = useState([]);
 
-      const conectar = async () => {
-        console.log( nome + " Está Conectado a Sala " + sala);
+
+  useEffect(()=>{
+    socket = io(socketUrl);
+  },[]);
+
+  useEffect(() => {
+    socket.on("receber_mensagem", (dados) => {
+      console.log("Mensagem Recebida: " + dados);
+      setListaMensagens([...listaMensagens, dados]);
+    });
+  });
+
+  const conectarSala = () => {
+     console.log( nome + " Está Conectado a Sala " + sala);
+     setLogado(true)
+     socket.emit("conectar_a_sala", sala);
       }
+
+  const enviarMensagem = async () => {
+    console.log("Mensagem Enviada: " + mensagem);
+    const conteudoMensagem = {
+      sala: sala,
+      conteudo:{
+        nome,
+        mensagem
+      }
+    }; 
+    console.log(conteudoMensagem);
+
+    await socket.emit("enviar_mensagem", conteudoMensagem)
+    setListaMensagens([...listaMensagens, conteudoMensagem.conteudo]);
+    setMensagem("");
+  }
 
 
   return (
     <div>
       <h1>Home</h1>
-      <p>{!logado ? 
+      {!logado ? 
       <>
         <label>Nome: </label>
         <input type="text" placeholder="Nome" value={nome} onChange={
@@ -40,9 +66,29 @@ const Home = () => {
         </select>
         <br/>
 
-        <button onClick={conectar}>Entrar</button>
+        <button onClick={conectarSala}>Entrar</button>
       </>
-      : "logado"}</p>
+      : 
+      <>
+      {listaMensagens.map((msg, key) => {
+        return (
+          <div key={key}>
+            <strong>{msg.nome}:</strong>
+            <span>{msg.mensagem}</span>
+          </div>
+        )
+      })}
+      <input type='text' 
+        name="mensagem" 
+        placeholder="mensagem..." 
+        value={mensagem}
+        onChange={texto =>
+      {
+        setMensagem(texto.target.value)}}/>
+        
+        <button onClick={enviarMensagem}>Enviar</button>
+      </>
+      }
     </div>
   );
 };
