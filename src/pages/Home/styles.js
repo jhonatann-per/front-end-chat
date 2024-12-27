@@ -18,7 +18,7 @@ export const Background = styled.div`
   align-items: center;
 `;
 
-export const LoginBox = styled.div`
+export const LoginForm = styled.form`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,6 +42,10 @@ export const LoginBox = styled.div`
     width: 38%; 
     height: 400px; 
     }
+  @media (max-width: 414px) {
+    width: 80%; 
+    height: 400px; 
+    }
 `;
 
 export const ChatBox = styled.div`
@@ -63,9 +67,13 @@ export const ChatBox = styled.div`
     width: 50%; 
     height: 500px; 
     }
+  @media (max-width: 414px) {
+    width: 80%; 
+    height: 400px; 
+    }
 `;
 
-export const MessageContainer = styled.div`
+export const MessageContainer = styled.form`
   flex: 1;
   overflow-y: auto;
   margin-bottom: 10px;
@@ -99,7 +107,7 @@ export const Button = styled.button`
   align-self: flex-end;
 `;
 
-export const MessageInputContainer = styled.div`
+export const MessageFormContainer = styled.form`
   display: flex;
   gap: 10px;
 `;

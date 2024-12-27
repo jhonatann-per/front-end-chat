@@ -13,5 +13,9 @@ O objetivo é permitir que os usuários entrem em diferentes salas de bate-papo 
 Instalar o React
 ### npx create-react-app front-chat
 
+Instalar o Socket.io no frontend para conectar ao back-end.
+### npm install socket.io-client
+
 Vou usar o Axios para fazer requisições HTTP ao backend.
 ### npm install axios
+

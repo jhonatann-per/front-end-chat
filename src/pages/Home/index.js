@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { socketUrl } from '../../config/configApi';
 import { io } from 'socket.io-client';
-import { Container, ChatBox, LoginBox, Input, Select, Button, Message, MessageReceived, MessageInputContainer, MessageContainer, Background, ConteudoMsg } from './styles';
-
+import { Container, ChatBox, LoginForm, Input, Select, 
+  Button, Message, MessageReceived, MessageFormContainer, MessageContainer, Background, ConteudoMsg } from './styles';
+import { api } from '../../config/configApi';
 let socket;
 const Home = () => {
   const [logado, setLogado] = useState(false);
   const [nome, setNome] = useState('');
+  const [idUser, setIdUser] = useState('');
+  const [email, setEmail] = useState('');
   const [sala, setSala] = useState('');
 
   const [mensagem, setMensagem] = useState('');
@@ -16,26 +19,42 @@ const Home = () => {
     socket = io(socketUrl);
   }, []);
 
+
   useEffect(() => {
     socket.on("receber_mensagem", (dados) => {
       console.log("Mensagem Recebida: " + dados);
       setListaMensagens([...listaMensagens, dados]);
     });
-  });
+  }, [listaMensagens]);
 
-  const conectarSala = () => {
-    console.log(nome + " Está Conectado a Sala " + sala);
-    setLogado(true);
-    socket.emit("conectar_a_sala", sala);
+  const conectarSala = async (e) => {
+    e.preventDefault();
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    await api.post('/login', { email}, { headers })
+    .then((response) => {
+      console.log(response.data.mensagem);
+      setNome(response.data.usuario.nome);
+      setIdUser(response.data.usuario.id);
+      setLogado(true);
+      socket.emit("conectar_a_sala", sala);
+     }).catch((error) => {
+        console.log(error);
+     });
   };
 
-  const enviarMensagem = async () => {
+  const enviarMensagem = async (e) => {
+    e.preventDefault();
     console.log("Mensagem Enviada: " + mensagem);
     const conteudoMensagem = {
-      sala: sala,
+      sala,
       conteudo: {
-        nome,
-        mensagem
+        mensagem,
+        usuario:{
+          id: idUser,
+          nome
+        }
       }
     };
     console.log(conteudoMensagem);
@@ -49,10 +68,11 @@ const Home = () => {
     <Container>
       <Background>
         {!logado ? 
-          <LoginBox>
+          <LoginForm onSubmit={conectarSala}>
             <h1>Entrar</h1>
-            <label>Nome:</label>
-            <Input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+            <label>Email:</label>
+            <Input type="text" placeholder="E-mail" value={email} 
+            onChange={(e) => setEmail(e.target.value)} />
 
             <label>Sala:</label>
             <Select name='sala' value={sala} onChange={(e) => setSala(e.target.value)}>
@@ -63,9 +83,8 @@ const Home = () => {
               <option value='4'>Python</option>
             </Select>
             <br />
-
-            <Button onClick={conectarSala}>Entrar</Button>
-          </LoginBox>
+            <Button>Entrar</Button>
+          </LoginForm>
           : 
           <ChatBox>
             <MessageContainer>
@@ -86,10 +105,10 @@ const Home = () => {
                 );
               })}
             </MessageContainer>
-            <MessageInputContainer>
+            <MessageFormContainer onSubmit={enviarMensagem}>
               <Input type='text' name="mensagem" placeholder=" Enviar Mensagem!" value={mensagem} onChange={(e) => setMensagem(e.target.value)} />
-              <Button onClick={enviarMensagem}>Enviar</Button>
-            </MessageInputContainer>
+              <Button >Enviar</Button>
+            </MessageFormContainer>
           </ChatBox>
         }
       </Background>
