@@ -73,11 +73,12 @@ export const ChatBox = styled.div`
     }
 `;
 
-export const MessageContainer = styled.form`
+export const MensageContainer = styled.form`
   flex: 1;
   overflow-y: auto;
   margin-bottom: 10px;
 `;
+
 
 export const Input = styled.input`
   padding: 8px;

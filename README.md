@@ -19,3 +19,6 @@ Instalar o Socket.io no frontend para conectar ao back-end.
 Vou usar o Axios para fazer requisições HTTP ao backend.
 ### npm install axios
 
+
+Vamos utilizar o react-scroll-to-bottom para criar o scroll automático das mensagens no chat.
+### npm install react-scroll-to-bottom
