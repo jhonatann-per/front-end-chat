@@ -6,6 +6,7 @@ import { Container, ChatBox, LoginForm, Input, Select,
 import { api } from '../../config/configApi';
 import ScrollToBottom from 'react-scroll-to-bottom'; 
 
+
 let socket;
 const Home = () => {
   const [logado, setLogado] = useState(false);
@@ -13,6 +14,7 @@ const Home = () => {
   const [idUser, setIdUser] = useState('');
   const [email, setEmail] = useState('');
   const [sala, setSala] = useState('');
+  const [salas, setSalas] = useState([]);
 
   const [mensagem, setMensagem] = useState('');
   const [listaMensagens, setListaMensagens] = useState([]);
@@ -24,6 +26,10 @@ const Home = () => {
 
   useEffect(() => {
     socket = io(socketUrl);
+    socket.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+    listarSala();
   }, []);
 
   useEffect(() => {
@@ -32,6 +38,26 @@ const Home = () => {
       setListaMensagens([...listaMensagens, dados]);
     });
   }, [listaMensagens]);
+
+  const listarSala = async () => {
+    await api.get('/listar-salas')
+    .then((response) => {
+      console.log(response.data);
+      setSalas(response.data.salas);
+    }).catch((erro) => {
+      if (erro.response) {
+        setStatus({
+          type: 'error',
+          mensagem: erro.response.data.mensagem
+        });
+      } else {
+        setStatus({
+          erro: 'error',
+          mensagem: 'Erro tente novamente mais tarde!'
+        });
+      }
+    });
+  }
 
   const conectarSala = async (e) => {
     e.preventDefault();
@@ -46,7 +72,7 @@ const Home = () => {
       setLogado(true);
       socket.emit("conectar_a_sala", sala);
       listarMensagens();
-      setStatus({ type: '', mensagem: '' }); // Limpar qualquer mensagem de erro
+      setStatus({ type: '', mensagem: '' });
     }).catch((error) => {
       setStatus({ 
         type: 'error', 
@@ -54,6 +80,7 @@ const Home = () => {
       console.log(error);
     });
   };
+
 
   const listarMensagens = async () => {
     await api.get('/listar-mensagens/' + sala)
@@ -82,18 +109,20 @@ const Home = () => {
       }
     };
     console.log(conteudoMensagem);
-    await socket.emit("enviar_mensagem", conteudoMensagem, (erro) => {
+    socket.emit("enviar_mensagem", conteudoMensagem, (erro) => {
       if (erro) {
         setStatus({ 
           type: 'error', 
           mensagem: 'Erro ao enviar mensagem. Tente novamente mais tarde.' });
         console.log(erro);
       } else {
-        setListaMensagens([...listaMensagens, conteudoMensagem.conteudo]);
+        setListaMensagens((prevMensagens) => [...prevMensagens, conteudoMensagem.conteudo]);
         setMensagem("");
         setStatus({ type: '', mensagem: '' }); 
       }
     });
+    setListaMensagens((prevMensagens) => [...prevMensagens, conteudoMensagem.conteudo]);
+    setMensagem(""); 
   };
 
   return (
@@ -106,20 +135,22 @@ const Home = () => {
             <label>Email:</label>
             <Input type="text" placeholder="E-mail" value={email} 
             onChange={(e) => setEmail(e.target.value)} />
-
+          
             <label>Sala:</label>
-            <Select name='sala' 
-            value={sala} 
-            onChange={(e) => setSala(e.target.value)}>
+            <Select 
+              name='sala' 
+              value={sala} 
+              onChange={(e) => setSala(e.target.value)}
+            >
               <option value=''>Selecione uma sala</option>
-              <option value='1'>React.js</option>
-              <option value='2'>Node.js</option>
-              <option value='3'>React Native</option>
-              <option value='4'>Python</option>
+              {salas.map((sala) => (
+                <option value={sala.id} key={sala.id}>{sala.nome}</option>
+              ))}
             </Select>
             <br />
             <Button>Entrar</Button>
           </LoginForm>
+          
           : 
           <ChatBox>
             <ScrollToBottom className='scrollMsg'>
@@ -143,12 +174,14 @@ const Home = () => {
               </MensageContainer>
             </ScrollToBottom>
             <MessageFormContainer onSubmit={enviarMensagem}>
-              <Input type='text' 
+              <Input 
+                type='text' 
                 name="mensagem" 
-                placeholder=" Enviar Mensagem!" 
+                placeholder="Enviar Mensagem!" 
                 value={mensagem} 
-                onChange={(e) => setMensagem(e.target.value)} />
-              <Button >Enviar</Button>
+                onChange={(e) => setMensagem(e.target.value)} 
+              />
+              <Button>Enviar</Button>
             </MessageFormContainer>
           </ChatBox>
         }
